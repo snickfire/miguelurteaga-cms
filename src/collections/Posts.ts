@@ -5,9 +5,17 @@ import {
   InlineToolbarFeature,
   UploadFeature,
 } from '@payloadcms/richtext-lexical'
+import { processPostImages } from '../utils/imageWorker'
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
+  hooks: {
+    afterChange: [
+      async ({ req, doc }) => {
+        await processPostImages(req.payload, doc)
+      },
+    ],
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'status', 'publishedDate', 'author'],

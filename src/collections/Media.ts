@@ -11,6 +11,21 @@ export const Media: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      name: 'processed',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'processedSizes',
+      type: 'json',
+      admin: {
+        readOnly: true,
+      },
+    },
   ],
   upload: {
     // These are not supported on Workers yet due to lack of sharp
