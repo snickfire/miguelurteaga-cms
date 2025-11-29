@@ -25,6 +25,8 @@ export const triggerImageWorker = async (
     return null
   }
 
+  console.log('Triggering image worker for:', data)
+
   try {
     const response = await fetch(`${workerUrl}/generate-sizes`, {
       method: 'POST',
@@ -52,10 +54,12 @@ export const processPostImages = async (
   payload: Payload,
   post: any, // Using any for now to avoid complex type imports, can be refined
 ): Promise<void> => {
+  console.log('Processing post images for:', post.id)
   const postId = post.id
 
   // 1. Process Featured Image
   if (post.featuredImage) {
+    console.log('Found featured image:', post.featuredImage)
     let featuredImageId = post.featuredImage
     // Handle case where featuredImage is an object (populated)
     if (typeof featuredImageId === 'object' && featuredImageId?.id) {
@@ -67,7 +71,10 @@ export const processPostImages = async (
       id: featuredImageId,
     })
 
+    console.log('Fetched media:', media?.id, 'Processed:', media?.processed)
+
     if (media && !media.processed && media.filename) {
+      console.log('Triggering worker for featured image...')
       const result = await triggerImageWorker({
         id: featuredImageId,
         kind: 'featured',
