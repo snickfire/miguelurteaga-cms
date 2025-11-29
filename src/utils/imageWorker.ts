@@ -50,6 +50,25 @@ export const triggerImageWorker = async (
   }
 }
 
+const getLargestSizeKey = (
+  sizes: { [key: string]: string },
+  postId: string,
+  mediaId: string,
+  kind: 'featured' | 'inline',
+): string | null => {
+  const priority = ['l', 'm', 's', 'xs']
+  for (const size of priority) {
+    if (sizes[size]) {
+      if (kind === 'featured') {
+        return `posts/${postId}/featured_${size}.webp`
+      } else {
+        return `posts/${postId}/inline_${mediaId}_${size}.webp`
+      }
+    }
+  }
+  return null
+}
+
 export const processPostImages = async (
   payload: Payload,
   post: any, // Using any for now to avoid complex type imports, can be refined
@@ -83,6 +102,13 @@ export const processPostImages = async (
       })
 
       if (result) {
+        const newFilename = getLargestSizeKey(
+          result.sizes,
+          postId,
+          featuredImageId,
+          'featured',
+        )
+
         // Update Media record
         await payload.update({
           collection: 'media',
@@ -90,8 +116,7 @@ export const processPostImages = async (
           data: {
             processed: true,
             processedSizes: result.sizes,
-            // Optional: Update filename to one of the generated sizes if needed
-            // filename: ... 
+            ...(newFilename && { filename: newFilename }),
           },
         })
       }
@@ -103,35 +128,43 @@ export const processPostImages = async (
     const traverseNodes = async (nodes: any[]) => {
       for (const node of nodes) {
         if (node.type === 'upload' && node.value) {
-           let mediaId = node.value
-           if (typeof mediaId === 'object' && mediaId.id) {
-             mediaId = mediaId.id
-           }
+          let mediaId = node.value
+          if (typeof mediaId === 'object' && mediaId.id) {
+            mediaId = mediaId.id
+          }
 
-           const media = await payload.findByID({
-             collection: 'media',
-             id: mediaId,
-           })
+          const media = await payload.findByID({
+            collection: 'media',
+            id: mediaId,
+          })
 
-           if (media && !media.processed && media.filename) {
-             const result = await triggerImageWorker({
-               id: mediaId,
-               kind: 'inline',
-               postId: postId,
-               r2Key: media.filename,
-             })
+          if (media && !media.processed && media.filename) {
+            const result = await triggerImageWorker({
+              id: mediaId,
+              kind: 'inline',
+              postId: postId,
+              r2Key: media.filename,
+            })
 
-             if (result) {
-                await payload.update({
-                  collection: 'media',
-                  id: mediaId,
-                  data: {
-                    processed: true,
-                    processedSizes: result.sizes,
-                  },
-                })
-             }
-           }
+            if (result) {
+              const newFilename = getLargestSizeKey(
+                result.sizes,
+                postId,
+                mediaId,
+                'inline',
+              )
+
+              await payload.update({
+                collection: 'media',
+                id: mediaId,
+                data: {
+                  processed: true,
+                  processedSizes: result.sizes,
+                  ...(newFilename && { filename: newFilename }),
+                },
+              })
+            }
+          }
         }
 
         if (node.children && Array.isArray(node.children)) {
