@@ -150,6 +150,16 @@ export interface User {
 export interface Media {
   id: number;
   alt: string;
+  processed?: boolean | null;
+  processedSizes?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -320,6 +330,8 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  processed?: T;
+  processedSizes?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
