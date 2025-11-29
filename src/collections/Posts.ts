@@ -12,7 +12,11 @@ export const Posts: CollectionConfig = {
   hooks: {
     afterChange: [
       async ({ req, doc }) => {
-        await processPostImages(req.payload, doc)
+        try {
+          await processPostImages(req.payload, doc)
+        } catch (err) {
+          console.error('Error processing post images:', err)
+        }
       },
     ],
   },
